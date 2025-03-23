@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoriesDto } from './dto/categories.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -7,16 +7,13 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  @Post()
+  @Post('users/:userId')
   @UseGuards(JwtAuthGuard)
   public async createCategories(
-    @CurrentUser() user,
+    @Param('userId') userId: string,
     @Body() body: CreateCategoriesDto,
   ): Promise<void> {
-    return await this.categoriesService.createCategories(
-      body.category,
-      user.id,
-    );
+    return await this.categoriesService.createCategories(body.category, userId);
   }
 }
 // TODO GET categories (checkAllCategories)
