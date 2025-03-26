@@ -38,12 +38,6 @@ export class TasksController {
     return await this.tasksService.getUserTaskById(user, user.id);
   }
 
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  public async deteleTask(@Param('id') id: string, @CurrentUser() user) {
-    return await this.tasksService.deleteTask(user, user.id);
-  }
-
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   public async updateTask(
@@ -52,5 +46,11 @@ export class TasksController {
     @Body() updateTaskDto: UpdateTaskDto,
   ) {
     return await this.tasksService.updateTask(taskId, user.id, updateTaskDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  public async deteleTask(@Param('id') id: string, @CurrentUser() user) {
+    return await this.tasksService.deleteTask(user, user.id);
   }
 }
