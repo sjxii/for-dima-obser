@@ -42,7 +42,25 @@ export class TasksService {
     return task.length > 0 ? task[0] : null;
   }
 
-  public async updateTask(taskId: string, updateTaskDto: UpdateTaskDto) {
+  public async updateTask(
+    taskId: string,
+    userId: string,
+    updateTaskDto: UpdateTaskDto,
+  ) {
+    if (!taskId || !userId) {
+      throw new BadRequestException('Task ID and User ID are required');
+    }
+
+    const task = await this.database
+      .select()
+      .from(schema.tasks)
+      .where(eq(schema.tasks.id, taskId))
+      .limit(1);
+
+    if (task.length === 0 || task[0].userId !== userId) {
+      throw new NotFoundException('Task not found or you are not the owner');
+    }
+
     return await this.database
       .update(schema.tasks)
       .set(updateTaskDto)
@@ -50,6 +68,10 @@ export class TasksService {
   }
 
   public async deleteTask(userId: string, taskId: string): Promise<void> {
+    if (!taskId || !userId) {
+      throw new BadRequestException('Task ID and User ID are required');
+    }
+
     const task = await this.database
       .select()
       .from(schema.tasks)
