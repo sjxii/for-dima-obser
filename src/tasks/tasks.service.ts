@@ -21,11 +21,31 @@ export class TasksService {
     await this.database.insert(schema.tasks).values(task);
   }
 
-  public async getTask(userId: string) {
+  public async getTasks(userId: string, categoryId?: string, status?: string) {
+    let conditions = [eq(schema.tasks.userId, userId)];
+
+    if (categoryId) {
+      conditions.push(eq(schema.tasks.categoryId, categoryId));
+    }
+
+    if (status) {
+      if (!schema.statusEnum.enumValues.includes(status as any)) {
+        throw new BadRequestException(
+          `Invalid status. Allowed values: ${schema.statusEnum.enumValues.join(', ')}`,
+        );
+      }
+      conditions.push(
+        eq(
+          schema.tasks.status,
+          status as (typeof schema.statusEnum.enumValues)[number],
+        ),
+      );
+    }
+
     return await this.database
       .select()
       .from(schema.tasks)
-      .where(eq(schema.tasks.userId, userId));
+      .where(and(...conditions));
   }
 
   public async getUserTaskById(taskId: string, userId: string) {

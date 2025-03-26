@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
@@ -28,8 +29,12 @@ export class TasksController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  public async getTask(@CurrentUser() user) {
-    return await this.tasksService.getTask(user.id);
+  public async getTasks(
+    @CurrentUser() user,
+    @Query('category') categoryId?: string,
+    @Query('status') status?: string,
+  ) {
+    return await this.tasksService.getTasks(user.id, categoryId, status);
   }
 
   @Get(':id')
