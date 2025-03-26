@@ -1,65 +1,32 @@
 import {
-  BadRequestException,
-  Inject,
   Injectable,
+  Inject,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { Database, DATABASE_CONNECTION } from 'src/database/database.module';
-import * as schema from '../database/schema';
-import { and, eq, InferInsertModel, InferSelectModel, sql } from 'drizzle-orm';
 import { UpdateTaskDto } from './dto/task.dto';
-
-export type TaskInsertModel = InferInsertModel<typeof schema.tasks>;
+import { TaskInsertModel, TasksRepository } from './task.repository';
 
 @Injectable()
 export class TasksService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly database: Database,
-  ) {}
+  constructor(private readonly tasksRepository: TasksRepository) {}
 
   public async createTask(task: TaskInsertModel): Promise<void> {
-    await this.database.insert(schema.tasks).values(task);
+    await this.tasksRepository.createTask(task);
   }
 
   public async getTasks(userId: string, categoryId?: string, status?: string) {
-    let conditions = [eq(schema.tasks.userId, userId)];
-
-    if (categoryId) {
-      conditions.push(eq(schema.tasks.categoryId, categoryId));
-    }
-
-    if (status) {
-      if (!schema.statusEnum.enumValues.includes(status as any)) {
-        throw new BadRequestException(
-          `Invalid status. Allowed values: ${schema.statusEnum.enumValues.join(', ')}`,
-        );
-      }
-      conditions.push(
-        eq(
-          schema.tasks.status,
-          status as (typeof schema.statusEnum.enumValues)[number],
-        ),
-      );
-    }
-
-    return await this.database
-      .select()
-      .from(schema.tasks)
-      .where(and(...conditions));
+    return await this.tasksRepository.getTasks(userId, categoryId, status);
   }
 
   public async getUserTaskById(taskId: string, userId: string) {
-    if (!taskId || !userId) {
-      throw new BadRequestException('Task ID and User ID are required');
+    const task = await this.tasksRepository.getUserTaskById(taskId, userId);
+
+    if (!task) {
+      throw new NotFoundException('Task not found or you are not the owner');
     }
 
-    const task = await this.database
-      .select()
-      .from(schema.tasks)
-      .where(and(eq(schema.tasks.id, taskId), eq(schema.tasks.userId, userId)))
-      .limit(1);
-
-    return task.length > 0 ? task[0] : null;
+    return task;
   }
 
   public async updateTask(
@@ -67,41 +34,24 @@ export class TasksService {
     userId: string,
     updateTaskDto: UpdateTaskDto,
   ) {
-    if (!taskId || !userId) {
-      throw new BadRequestException('Task ID and User ID are required');
-    }
+    const updatedTask = await this.tasksRepository.updateTask(
+      taskId,
+      userId,
+      updateTaskDto,
+    );
 
-    const task = await this.database
-      .select()
-      .from(schema.tasks)
-      .where(eq(schema.tasks.id, taskId))
-      .limit(1);
-
-    if (task.length === 0 || task[0].userId !== userId) {
+    if (!updatedTask) {
       throw new NotFoundException('Task not found or you are not the owner');
     }
 
-    return await this.database
-      .update(schema.tasks)
-      .set(updateTaskDto)
-      .where(eq(schema.tasks.id, taskId));
+    return updatedTask;
   }
 
   public async deleteTask(userId: string, taskId: string): Promise<void> {
-    if (!taskId || !userId) {
-      throw new BadRequestException('Task ID and User ID are required');
-    }
+    const result = await this.tasksRepository.deleteTask(userId, taskId);
 
-    const task = await this.database
-      .select()
-      .from(schema.tasks)
-      .where(and(eq(schema.tasks.id, taskId), eq(schema.tasks.userId, userId)))
-      .limit(1);
-
-    if (task.length === 0) {
+    if (!result) {
       throw new NotFoundException('Task not found or you are not the owner');
     }
-
-    await this.database.delete(schema.tasks).where(eq(schema.tasks.id, taskId));
   }
 }

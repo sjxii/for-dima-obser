@@ -1,8 +1,9 @@
-import { IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
-export class CreateCategoriesDto {
+export class CreateCategoryDto {
   @IsString()
   @IsNotEmpty()
-  @MinLength(3)
-  category: string;
+  name: string;
+
+  userId: string;
 }

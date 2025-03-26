@@ -7,10 +7,10 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { CategoriesService } from './categories.service';
-import { CreateCategoriesDto } from './dto/categories.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
+import { CategoriesService } from 'src/tasks/categories.service';
+import { CreateCategoryDto } from 'src/tasks/dto/categories.dto';
 
 @Controller('categories')
 export class CategoriesController {
@@ -20,12 +20,9 @@ export class CategoriesController {
   @UseGuards(JwtAuthGuard)
   public async createCategories(
     @CurrentUser() user,
-    @Body() body: CreateCategoriesDto,
+    @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<void> {
-    return await this.categoriesService.createCategories(
-      body.category,
-      user.id,
-    );
+    return await this.categoriesService.createCategories(createCategoryDto);
   }
 
   @Get()
@@ -40,6 +37,6 @@ export class CategoriesController {
     @Param('id') id: string,
     @CurrentUser() user,
   ): Promise<void> {
-    return await this.categoriesService.deleteCategories(user.id, id);
+    return await this.categoriesService.deleteCategories(id, user.id);
   }
 }

@@ -8,12 +8,18 @@ import { JwtPayload } from '../interface/jwt-payload.interface';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly configService: ConfigService,
     private readonly userRepository: UserRepository,
+    configService: ConfigService,
   ) {
+    const secretOrKey = configService.get<string>('JWT_SECRET');
+
+    if (!secretOrKey) {
+      throw new Error('JWT_SECRET is not defined in the configuration');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get('JWT_SECRET'),
+      secretOrKey: secretOrKey as string,
     });
   }
 
