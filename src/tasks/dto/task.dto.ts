@@ -8,11 +8,11 @@ import {
 import { prioritiesEnum, statusEnum } from 'src/database/schema';
 
 export class UpdateTaskDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(prioritiesEnum)
   priority: 'High' | 'Low';
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(statusEnum)
   status: 'TODO' | 'In Progress' | 'Done';
 
@@ -27,9 +27,11 @@ export class UpdateTaskDto {
 }
 
 export class CreateTaskDto {
+  @IsNotEmpty()
   @IsString()
   title: string;
 
+  @IsNotEmpty()
   @IsString()
   description: string;
 
@@ -37,13 +39,9 @@ export class CreateTaskDto {
   @IsUUID()
   categoryId?: string;
 
-  @IsNotEmpty()
   @IsEnum(prioritiesEnum)
   priority: 'High' | 'Low';
 
-  @IsNotEmpty()
   @IsEnum(statusEnum)
   status: 'TODO' | 'In Progress' | 'Done';
-
-  userId: string;
 }

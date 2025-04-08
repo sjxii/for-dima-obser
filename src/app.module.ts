@@ -6,7 +6,5 @@ import { JwtStrategy } from './auth/strategy/jwt.strategy';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, TasksModule],
-  controllers: [],
-  providers: [JwtStrategy],
 })
 export class AppModule {}

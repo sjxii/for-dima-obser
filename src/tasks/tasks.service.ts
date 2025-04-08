@@ -1,11 +1,10 @@
-import {
-  Injectable,
-  Inject,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateTaskDto } from './dto/task.dto';
-import { TaskInsertModel, TasksRepository } from './task.repository';
+import {
+  TaskInsertModel,
+  TaskSelectModel,
+  TasksRepository,
+} from './task.repository';
 
 @Injectable()
 export class TasksService {
@@ -15,11 +14,18 @@ export class TasksService {
     await this.tasksRepository.createTask(task);
   }
 
-  public async getTasks(userId: string, categoryId?: string, status?: string) {
+  public async getTasks(
+    userId: string,
+    categoryId?: string,
+    status?: 'TODO' | 'In Progress' | 'Done',
+  ): Promise<TaskSelectModel[]> {
     return await this.tasksRepository.getTasks(userId, categoryId, status);
   }
 
-  public async getUserTaskById(taskId: string, userId: string) {
+  public async getUserTaskById(
+    taskId: string,
+    userId: string,
+  ): Promise<TaskSelectModel> {
     const task = await this.tasksRepository.getUserTaskById(taskId, userId);
 
     if (!task) {
@@ -31,12 +37,10 @@ export class TasksService {
 
   public async updateTask(
     taskId: string,
-    userId: string,
     updateTaskDto: UpdateTaskDto,
-  ) {
+  ): Promise<TaskSelectModel> {
     const updatedTask = await this.tasksRepository.updateTask(
       taskId,
-      userId,
       updateTaskDto,
     );
 
@@ -48,10 +52,6 @@ export class TasksService {
   }
 
   public async deleteTask(userId: string, taskId: string): Promise<void> {
-    const result = await this.tasksRepository.deleteTask(userId, taskId);
-
-    if (!result) {
-      throw new NotFoundException('Task not found or you are not the owner');
-    }
+    await this.tasksRepository.deleteTask(userId, taskId);
   }
 }
