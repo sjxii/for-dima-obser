@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -9,12 +10,15 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthResponseDto, SignInDto, SignUpDto } from './dto/auth.dto';
 import { UserRepository } from './user.repository';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 export const HASH_SALT = 12;
 
 @Injectable()
 export class AuthService {
   constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
@@ -37,10 +41,18 @@ export class AuthService {
   }
 
   public async signIn(credentials: SignInDto): Promise<AuthResponseDto> {
-    const user = await this.userRepository.findByEmail(credentials.email);
+    const cacheKey = `user:${credentials.email}`;
+
+    let user = await this.cacheManager.get<any>(cacheKey);
 
     if (!user) {
-      throw new NotFoundException("User doesn't exists");
+      user = await this.userRepository.findByEmail(credentials.email);
+
+      if (!user) {
+        throw new NotFoundException("User doesn't exist");
+      }
+
+      await this.cacheManager.set(cacheKey, user, 60);
     }
 
     const isPasswordValid = await bcrypt.compare(
